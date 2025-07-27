@@ -1,5 +1,5 @@
 [package]
-name = "pubsub-emulator-backend"
+name = "pubsub-emulator-util"
 version = "0.1.0"
 edition = "2024"
 
