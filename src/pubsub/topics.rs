@@ -4,7 +4,7 @@ use super::models::{ListTopicsResponse, Topic};
 
 pub async fn list(
     project_id: &str,
-    client: Client,
+    client: &Client,
     address: &str,
 ) -> Result<ListTopicsResponse, reqwest::Error> {
     let endpoint = format!("{address}/v1/projects/{project_id}/topics");
@@ -17,7 +17,7 @@ pub async fn list(
 
 pub async fn create(
     project_id: &str,
-    client: Client,
+    client: &Client,
     address: &str,
     topic_id: &str,
 ) -> Result<Topic, reqwest::Error> {
