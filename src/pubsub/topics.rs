@@ -14,3 +14,19 @@ pub async fn list(
 
     Ok(payload)
 }
+
+pub async fn create(
+    project_id: &str,
+    client: Client,
+    address: &str,
+    topic_id: &str,
+) -> Result<Topic, reqwest::Error> {
+    let endpoint = format!("{address}/v1/projects/{project_id}/topics/{topic_id}");
+
+    // NOTE: for some reason we have to end this empty '{}' value
+    let payload = "{}";
+    let response = client.put(endpoint).body(payload).send().await?;
+
+    let created_topic = response.json().await?;
+    Ok(created_topic)
+}
