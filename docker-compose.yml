@@ -1,0 +1,18 @@
+services:
+  pubsub-emulator:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    command: gcloud beta emulators pubsub start --host-port=0.0.0.0:8085 --project=my-local-project
+    ports:
+      - "8085:8085"
+    environment:
+      - PUBSUB_PROJECT_ID=my-local-project
+    volumes:
+      - pubsub-data:/opt/google-cloud-sdk/emulators/pubsub
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8085/v1/projects || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pubsub-data:
