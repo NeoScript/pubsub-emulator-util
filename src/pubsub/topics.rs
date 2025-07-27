@@ -30,3 +30,21 @@ pub async fn create(
     let created_topic = response.json().await?;
     Ok(created_topic)
 }
+
+/// NOTE: topic_path should be in format of 'project/{project_id}/topics/{topic_id}'
+pub async fn delete(
+    client: &Client,
+    address: &str,
+    topic_path: &str,
+) -> Result<(), reqwest::Error> {
+    let endpoint = format!("{address}/v1/{topic_path}");
+
+    let response = client.delete(endpoint).send().await?;
+    match response.error_for_status() {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            eprintln!("Failed with error: {e}");
+            Err(e)
+        }
+    }
+}
