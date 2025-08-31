@@ -1,5 +1,7 @@
 use reqwest::Client;
 
+use crate::pubsub::models::{PubsubMessageRecieved, RawPubsubMessageToSend, SendablePubsubMessage};
+
 use super::models::{ListTopicsResponse, Topic};
 
 pub async fn list(
@@ -23,7 +25,7 @@ pub async fn create(
 ) -> Result<Topic, reqwest::Error> {
     let endpoint = format!("{address}/v1/projects/{project_id}/topics/{topic_id}");
 
-    // NOTE: for some reason we have to end this empty '{}' value
+    // NOTE: for some reason we have to send this empty '{}' value
     let payload = "{}";
     let response = client.put(endpoint).body(payload).send().await?;
 
@@ -47,4 +49,24 @@ pub async fn delete(
             Err(e)
         }
     }
+}
+
+pub async fn publish(
+    client: &Client,
+    address: &str,
+    topic: &Topic,
+    messages: Vec<&RawPubsubMessageToSend>,
+) -> Result<Vec<PubsubMessageRecieved>, reqwest::Error> {
+    let topic_path = &topic.name;
+    let endpoint = format!("{address}/v1/{topic_path}");
+
+    let sendable_payload: Vec<SendablePubsubMessage> = messages
+        .iter()
+        .map(|m| SendablePubsubMessage::from(*m))
+        .collect();
+
+    let response = client.post(endpoint).json(&sendable_payload).send().await?;
+    let payload = response.json().await?;
+
+    Ok(payload)
 }

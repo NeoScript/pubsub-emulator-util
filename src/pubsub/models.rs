@@ -1,7 +1,7 @@
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Deserializer, Serialize};
-use std::{collections::HashMap, str::Bytes};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// The struct fields are not comprehensive
 /// if you need a certain field that is not included, send a PR
@@ -37,13 +37,19 @@ pub struct SendablePubsubMessage {
     ordering_key: Option<String>,
 }
 
+impl From<&RawPubsubMessageToSend> for SendablePubsubMessage {
+    fn from(raw: &RawPubsubMessageToSend) -> Self {
+        Self {
+            data: raw.data.as_ref().map(|payload| STANDARD.encode(payload)),
+            attributes: raw.attributes.clone(),
+            ordering_key: raw.ordering_key.clone(),
+        }
+    }
+}
+
 impl From<RawPubsubMessageToSend> for SendablePubsubMessage {
     fn from(raw: RawPubsubMessageToSend) -> Self {
-        Self {
-            data: raw.data.map(|payload| STANDARD.encode(payload)),
-            attributes: raw.attributes,
-            ordering_key: raw.ordering_key,
-        }
+        Self::from(&raw)
     }
 }
 

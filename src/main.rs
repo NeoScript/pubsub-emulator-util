@@ -37,6 +37,7 @@ async fn main() {
     }
 
     let topics = topics::list(PROJECT_ID, &client, HOST).await;
+    println!("Current topic list: {topics:?}");
     let binding = topics.unwrap();
     let delete_topic = binding.topics.choose(&mut rand::rng()).unwrap();
     let delete_repsonse = topics::delete(&client, HOST, &delete_topic.name).await;
