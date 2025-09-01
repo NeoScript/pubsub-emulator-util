@@ -47,10 +47,19 @@ async fn handle_topics(cmd: &TopicCommands, config: &Config) -> Result<(), reqwe
             println!("Topic has been created {:?}", result);
             Ok(())
         }
-        TopicCommands::List => todo!(),
+        TopicCommands::List => {
+            let topic_list =
+                pubsub::topics::list(&config.project_id, &config.client, &config.host).await?;
+
+            println!("Topics Retreived:");
+            topic_list.topics.iter().for_each(|t| println!("{:?}", t));
+            Ok(())
+        }
         TopicCommands::Info => todo!(),
         TopicCommands::Delete { name } => {
             println!("Delete topic {name} from project {}", config.project_id);
+            pubsub::topics::delete(&config.client, &config.host, name).await?;
+            println!("Topic deleted");
             Ok(())
         }
     }
