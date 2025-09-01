@@ -5,6 +5,12 @@ use clap::{Args, Parser, Subcommand};
 pub struct Cli {
     #[command(subcommand)]
     pub commands: PubsubCommands,
+
+    #[arg(short, long)]
+    pub project_id: String,
+
+    #[arg(long, env)]
+    pub host: String,
 }
 
 #[derive(Subcommand)]
@@ -15,10 +21,8 @@ pub enum PubsubCommands {
 
 #[derive(Subcommand)]
 pub enum TopicCommands {
-    Create(CreateTopicArgs),
-}
-
-#[derive(Args)]
-pub struct CreateTopicArgs {
-    pub name: String,
+    Create { name: String },
+    List,
+    Info,
+    Delete { name: String },
 }

@@ -1,66 +1,57 @@
+use std::sync::Arc;
+
 use clap::Parser;
-use pubsub::topics;
-use rand::{
-    distr::{Alphanumeric, SampleString},
-    seq::IndexedRandom,
-};
-use reqwest::Client;
 
 use cli::Cli;
+use reqwest::Client;
 
 mod cli;
 mod pubsub;
 
-use crate::cli::PubsubCommands;
+use crate::cli::{PubsubCommands, TopicCommands};
 
-fn main() {
+struct Config {
+    client: Arc<Client>,
+    project_id: String,
+    host: String,
+}
+
+#[tokio::main]
+async fn main() {
     let cli = Cli::parse();
+    let client = Client::new();
+    let config = Config {
+        client: Arc::new(client),
+        project_id: cli.project_id.to_string(),
+        host: cli.host.to_string(),
+    };
 
-    match &cli.commands {
-        PubsubCommands::Topics(cli::TopicCommands::Create(args)) => {
-            println!("Create topic: {}", args.name);
-        }
+    let result = match &cli.commands {
+        PubsubCommands::Topics(cmd) => handle_topics(cmd, &config).await,
+    };
+
+    match result {
+        Ok(_) => println!("Completed Successfully"),
+        Err(e) => eprintln!("Error occured: {}", e),
     }
 }
 
-// #[tokio::main]
-// async fn main() {
-//     let client = Client::new();
-//     const PROJECT_ID: &str = "my-project";
-//     const HOST: &str = "http://localhost:8085";
-//     let topics = topics::list(PROJECT_ID, &client, HOST).await;
-//
-//     match topics {
-//         Ok(ref result) => {
-//             let topics = &result.topics;
-//             println!("Current list of topics: {} total", topics.len());
-//
-//             // topics.iter().for_each(|t| {
-//             //     let output =
-//             //         serde_json::to_string_pretty(t).expect("should be able to stringify topic");
-//             //     println!("{output}");
-//             // });
-//         }
-//         Err(ref e) => println!("Error pulling topics: {e}"),
-//     }
-//
-//     for _ in 0..2 {
-//         let topic_id = Alphanumeric.sample_string(&mut rand::rng(), 8);
-//         let topic = topics::create(PROJECT_ID, &client, HOST, &topic_id)
-//             .await
-//             .expect("should create topic");
-//         println!("topic created: {topic:?}");
-//     }
-//
-//     let topics = topics::list(PROJECT_ID, &client, HOST).await;
-//     println!("Current topic list: {topics:?}");
-//     let binding = topics.unwrap();
-//     let delete_topic = binding.topics.choose(&mut rand::rng()).unwrap();
-//     let delete_repsonse = topics::delete(&client, HOST, &delete_topic.name).await;
-//
-//     if delete_repsonse.is_ok() {
-//         println!("deleted {} successfully", &delete_topic.name);
-//     } else {
-//         eprintln!("failed deleting {}", &delete_topic.name);
-//     }
-// }
+async fn handle_topics(cmd: &TopicCommands, config: &Config) -> Result<(), reqwest::Error> {
+    match cmd {
+        TopicCommands::Create { name } => {
+            println!("Creating topic {name} on project {}", config.project_id);
+            let result =
+                pubsub::topics::create(&config.project_id, &config.client, &config.host, name)
+                    .await?;
+
+            println!("Topic has been created {:?}", result);
+            Ok(())
+        }
+        TopicCommands::List => todo!(),
+        TopicCommands::Info => todo!(),
+        TopicCommands::Delete { name } => {
+            println!("Delete topic {name} from project {}", config.project_id);
+            Ok(())
+        }
+    }
+}
