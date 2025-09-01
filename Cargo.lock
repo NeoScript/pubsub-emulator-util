@@ -936,7 +936,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pubsub-emulator-util"
+name = "pubsub-emulator-cli"
 version = "0.1.0"
 dependencies = [
  "base64",
