@@ -1,0 +1,5 @@
+services:
+  pubsub-emulator:
+    image: ghcr.io/neoscript/pubsub-emulator-lite:latest
+    ports:
+      - 8090:8090
