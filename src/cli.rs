@@ -41,10 +41,11 @@ pub struct InitArgs {
         short,
         long,
         value_name = "SECONDS",
+        default_value = "0",
         value_parser = clap::value_parser!(u8).range(0..=255),
         help = "how long (in seconds) to poll the pubsub emulator host before giving up."
     )]
-    pub timeout: Option<u8>,
+    pub timeout: u8,
 }
 
 #[derive(Subcommand)]
