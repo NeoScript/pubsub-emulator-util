@@ -26,7 +26,7 @@ async fn main() {
     };
 
     let result = match &cli.commands {
-        PubsubCommands::Topics(cmd) => handle_topics(cmd, &config).await,
+        PubsubCommands::Topics(cmd) => handle_topic_commands(cmd, &config).await,
         PubsubCommands::Init(init_args) => handle_init(init_args, &config).await,
     };
 
@@ -74,35 +74,31 @@ async fn handle_init(args: &InitArgs, ctx: &ConnectionInfo) -> Result<(), reqwes
     Ok(())
 }
 
-async fn handle_topics(cmd: &TopicCommands, ctx: &ConnectionInfo) -> Result<(), reqwest::Error> {
+async fn handle_topic_commands(
+    cmd: &TopicCommands,
+    ctx: &ConnectionInfo,
+) -> Result<(), reqwest::Error> {
     match cmd {
         TopicCommands::Create { name } => {
             let topic = Topic {
                 name: name.to_string(),
                 labels: None,
             };
-            println!("Creating topic {topic:?} on project {}", ctx.project_id);
-            let result = pubsub::topics::create(ctx, &topic).await?;
-
-            println!("Topic has been created {:?}", result);
+            pubsub::topics::create(ctx, &topic).await?;
             Ok(())
         }
         TopicCommands::List => {
             let topic_list = pubsub::topics::list(ctx).await?;
-
-            println!("Topics Retreived:");
             topic_list.topics.iter().for_each(|t| println!("{:?}", t));
             Ok(())
         }
         TopicCommands::Info => todo!(),
         TopicCommands::Delete { name } => {
-            println!("Delete topic {name} from project {}", ctx.project_id);
             let topic_to_delete = Topic {
                 name: name.to_string(),
                 labels: None,
             };
             pubsub::topics::delete(ctx, &topic_to_delete).await?;
-            println!("Topic deleted");
             Ok(())
         }
     }
