@@ -1,14 +1,29 @@
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use chrono::{DateTime, Utc};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
+
+#[derive(Debug, Clone)]
+pub struct ConnectionInfo {
+    pub client: Arc<Client>,
+    pub project_id: String,
+    pub host: String,
+}
 
 /// The struct fields are not comprehensive
 /// if you need a certain field that is not included, send a PR
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Topic {
     pub name: String,
     pub labels: Option<HashMap<String, String>>,
+}
+
+impl Topic {
+    pub fn full_path(&self, project_id: &str) -> String {
+        let name = &self.name;
+        format!("projects/{project_id}/topics/{name}")
+    }
 }
 
 #[derive(Deserialize, Debug)]
