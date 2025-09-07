@@ -1,10 +1,9 @@
-use std::{process::exit, sync::Arc, time::Duration};
+use std::{process::exit, sync::Arc};
 
 use clap::Parser;
 
 use cli::Cli;
 use reqwest::Client;
-use tokio::time::sleep;
 
 mod cli;
 mod parser;
@@ -12,7 +11,7 @@ mod pubsub;
 
 use crate::{
     cli::{InitArgs, PubsubCommands, TopicCommands},
-    pubsub::init::{self, wait_for_connection},
+    pubsub::{init::wait_for_connection, models::Topic},
 };
 
 struct Config {
@@ -62,9 +61,13 @@ async fn handle_init(args: &InitArgs, config: &Config) -> Result<(), reqwest::Er
         println!("using project: {project_id}");
 
         for topic in init.topics {
-            let result =
-                pubsub::topics::create(&project_id, &config.client, &config.host, &topic.name)
-                    .await;
+            let result = pubsub::topics::create(
+                &project_id,
+                &config.client,
+                &config.host,
+                &topic.clone().into(),
+            )
+            .await;
 
             match result {
                 Ok(t) => {
@@ -72,20 +75,26 @@ async fn handle_init(args: &InitArgs, config: &Config) -> Result<(), reqwest::Er
                 }
                 Err(e) => eprintln!("Error creating topic {:?} -> {}", topic.name, e),
             };
+
+            // TODO: make the pull subscriptions
+            // TODO: now make the push subscriptions
         }
+    } else {
+        eprintln!("Error parsing init file")
     }
-    // NOTE: need to do the following
-    // then attempt to create the topics/subscriptions for the given project in async
-    // print out any success/failures
     Ok(())
 }
 
 async fn handle_topics(cmd: &TopicCommands, config: &Config) -> Result<(), reqwest::Error> {
     match cmd {
         TopicCommands::Create { name } => {
-            println!("Creating topic {name} on project {}", config.project_id);
+            let topic = Topic {
+                name: name.to_string(),
+                labels: None,
+            };
+            println!("Creating topic {topic:?} on project {}", config.project_id);
             let result =
-                pubsub::topics::create(&config.project_id, &config.client, &config.host, name)
+                pubsub::topics::create(&config.project_id, &config.client, &config.host, &topic)
                     .await?;
 
             println!("Topic has been created {:?}", result);

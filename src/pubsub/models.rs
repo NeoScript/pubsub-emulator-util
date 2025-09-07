@@ -11,6 +11,13 @@ pub struct Topic {
     pub labels: Option<HashMap<String, String>>,
 }
 
+impl Topic {
+    pub fn full_path(&self, project_id: &str) -> String {
+        let name = &self.name;
+        format!("projects/{project_id}/topics/{name}")
+    }
+}
+
 #[derive(Deserialize, Debug)]
 pub struct ListTopicsResponse {
     pub topics: Vec<Topic>,

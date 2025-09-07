@@ -1,4 +1,4 @@
-use reqwest::Client;
+use reqwest::{Client, StatusCode};
 
 use crate::pubsub::models::{PubsubMessageRecieved, RawPubsubMessageToSend, SendablePubsubMessage};
 
@@ -21,16 +21,23 @@ pub async fn create(
     project_id: &str,
     client: &Client,
     address: &str,
-    topic_id: &str,
+    topic: &Topic,
 ) -> Result<Topic, reqwest::Error> {
-    let endpoint = format!("{address}/v1/projects/{project_id}/topics/{topic_id}");
+    let topic_path = topic.full_path(project_id);
+    let endpoint = format!("{address}/v1/{topic_path}");
+    let response = client.put(endpoint).send().await?;
 
-    // NOTE: for some reason we have to send this empty '{}' value
-    let payload = "{}";
-    let response = client.put(endpoint).body(payload).send().await?;
-
-    let created_topic = response.json().await?;
-    Ok(created_topic)
+    match response.status() {
+        StatusCode::OK | StatusCode::CREATED => {
+            let created_topic = response.json().await?;
+            Ok(created_topic)
+        }
+        StatusCode::CONFLICT => {
+            eprintln!("Conflict when creating topic, usually due to a duplicate topic");
+            Err(response.error_for_status().err().unwrap())
+        }
+        _ => Err(response.error_for_status().err().unwrap()),
+    }
 }
 
 /// NOTE: topic_path should be in format of 'project/{project_id}/topics/{topic_id}'

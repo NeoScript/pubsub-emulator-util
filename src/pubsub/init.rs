@@ -3,9 +3,7 @@ use std::time::Duration;
 use reqwest::Client;
 use tokio::time::sleep;
 
-use crate::{Config, parser::TopicInitEntry, pubsub::models::Topic};
-
-pub async fn is_live(host: &str, client: &Client) -> bool {
+async fn is_live(host: &str, client: &Client) -> bool {
     let result = client.get(host).send().await;
     result.is_ok()
 }
