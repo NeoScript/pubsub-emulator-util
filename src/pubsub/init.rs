@@ -3,16 +3,18 @@ use std::time::Duration;
 use reqwest::Client;
 use tokio::time::sleep;
 
-async fn is_live(host: &str, client: &Client) -> bool {
-    let result = client.get(host).send().await;
+use crate::pubsub::models::ConnectionInfo;
+
+async fn is_live(ctx: &ConnectionInfo) -> bool {
+    let result = ctx.client.get(&ctx.host).send().await;
     result.is_ok()
 }
 
-pub async fn wait_for_connection(host: &str, client: &Client, timeout: u8) -> bool {
+pub async fn wait_for_connection(ctx: &ConnectionInfo, timeout: u8) -> bool {
     let mut time_waited = 0;
 
     while time_waited < timeout {
-        let result = is_live(host, client).await;
+        let result = is_live(ctx).await;
         match result {
             true => return true,
             false => {

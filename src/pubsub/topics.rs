@@ -1,31 +1,24 @@
 use reqwest::{Client, StatusCode};
 
-use crate::pubsub::models::{PubsubMessageRecieved, RawPubsubMessageToSend, SendablePubsubMessage};
+use crate::pubsub::models::{
+    ConnectionInfo, PubsubMessageRecieved, RawPubsubMessageToSend, SendablePubsubMessage,
+};
 
 use super::models::{ListTopicsResponse, Topic};
 
-pub async fn list(
-    project_id: &str,
-    client: &Client,
-    address: &str,
-) -> Result<ListTopicsResponse, reqwest::Error> {
-    let endpoint = format!("{address}/v1/projects/{project_id}/topics");
+pub async fn list(ctx: &ConnectionInfo) -> Result<ListTopicsResponse, reqwest::Error> {
+    let endpoint = format!("{}/v1/projects/{}/topics", ctx.host, ctx.project_id);
     println!("Making request at: {endpoint}");
-    let response = client.get(endpoint).send().await?;
+    let response = ctx.client.get(endpoint).send().await?;
     let payload = response.json().await?;
 
     Ok(payload)
 }
 
-pub async fn create(
-    project_id: &str,
-    client: &Client,
-    address: &str,
-    topic: &Topic,
-) -> Result<Topic, reqwest::Error> {
-    let topic_path = topic.full_path(project_id);
-    let endpoint = format!("{address}/v1/{topic_path}");
-    let response = client.put(endpoint).send().await?;
+pub async fn create(ctx: &ConnectionInfo, topic: &Topic) -> Result<Topic, reqwest::Error> {
+    let topic_path = topic.full_path(&ctx.project_id);
+    let endpoint = format!("{}/v1/{}", ctx.host, topic_path);
+    let response = ctx.client.put(endpoint).send().await?;
 
     match response.status() {
         StatusCode::OK | StatusCode::CREATED => {
@@ -41,14 +34,11 @@ pub async fn create(
 }
 
 /// NOTE: topic_path should be in format of 'project/{project_id}/topics/{topic_id}'
-pub async fn delete(
-    client: &Client,
-    address: &str,
-    topic_path: &str,
-) -> Result<(), reqwest::Error> {
-    let endpoint = format!("{address}/v1/{topic_path}");
+pub async fn delete(ctx: &ConnectionInfo, topic: &Topic) -> Result<(), reqwest::Error> {
+    let topic_path = topic.full_path(&ctx.project_id);
+    let endpoint = format!("{}/v1/{}", ctx.host, topic_path);
 
-    let response = client.delete(endpoint).send().await?;
+    let response = ctx.client.delete(endpoint).send().await?;
     match response.error_for_status() {
         Ok(_) => Ok(()),
         Err(e) => {
