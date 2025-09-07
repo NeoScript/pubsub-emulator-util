@@ -1,22 +1,22 @@
 use std::{fs::File, io, path::Path};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::pubsub::models::Topic;
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProjectInitFile {
     pub project_id: String,
     pub topics: Vec<TopicInitEntry>,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PushSubInitEntry {
     pub name: String,
     pub endpoint: String,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TopicInitEntry {
     pub name: String,
     pub pull_subscriptions: Option<Vec<String>>,

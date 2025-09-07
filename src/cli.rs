@@ -1,14 +1,16 @@
-use std::path::Path;
-
-use clap::{Args, Parser, Subcommand};
+use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
 #[command(version, about)]
 pub struct Cli {
     #[command(subcommand)]
     pub commands: PubsubCommands,
-    // #[arg(long, env)]
-    // pub host: String,
+    #[arg(
+        long,
+        env("PUBSUB_EMULATOR_HOST"),
+        help = "address of pubsub emulator host [example: http://localhost:port]"
+    )]
+    pub host: String,
 }
 
 #[derive(Subcommand)]
@@ -31,17 +33,10 @@ pub struct InitArgs {
     pub file: String,
 
     #[arg(
-        long,
-        env("PUBSUB_EMULATOR_HOST"),
-        help = "the pubsub emulator host in the following format: `http://addr:port`"
-    )]
-    pub host: String,
-
-    #[arg(
         short,
         long,
         value_name = "SECONDS",
-        default_value = "0",
+        default_value = "5",
         value_parser = clap::value_parser!(u8).range(0..=255),
         help = "how long (in seconds) to poll the pubsub emulator host before giving up."
     )]

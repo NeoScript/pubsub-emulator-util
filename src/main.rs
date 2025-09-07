@@ -22,7 +22,7 @@ async fn main() {
     let config = ConnectionInfo {
         client: Arc::new(client),
         project_id: "my-project".to_string(), // TODO: fix this again
-        host: "http://localhost:8090".to_string(), //TODO: fix this too
+        host: cli.host,
     };
 
     let result = match &cli.commands {
@@ -41,13 +41,15 @@ async fn handle_init(args: &InitArgs, ctx: &ConnectionInfo) -> Result<(), reqwes
         exit(1);
     });
 
-    println!("Initialization Configuration accepted:\n{init_config:?}");
+    println!("Initialization Configuration accepted:");
+    let init_json = serde_json::to_string(&init_config).expect("should convert to json");
+    println!("{init_json}");
+    println!();
 
     // Define a new ctx to use the provided host from args and project_id from file
     let ctx = &ConnectionInfo {
         project_id: init_config.project_id,
-        host: args.host.clone(),
-        client: ctx.client.clone(),
+        ..ctx.clone()
     };
 
     let connection_established = wait_for_connection(ctx, args.timeout).await;
@@ -60,9 +62,7 @@ async fn handle_init(args: &InitArgs, ctx: &ConnectionInfo) -> Result<(), reqwes
         let result = pubsub::topics::create(ctx, &topic.clone().into()).await;
 
         match result {
-            Ok(t) => {
-                println!("Created topic: {:?}", t);
-            }
+            Ok(t) => println!("{:?} created successfully", t.name),
             Err(e) => eprintln!("Error creating topic {:?} -> {}", topic.name, e),
         };
 

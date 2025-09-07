@@ -13,7 +13,7 @@ pub struct ConnectionInfo {
 
 /// The struct fields are not comprehensive
 /// if you need a certain field that is not included, send a PR
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Topic {
     pub name: String,
     pub labels: Option<HashMap<String, String>>,

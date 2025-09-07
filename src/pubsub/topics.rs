@@ -8,7 +8,7 @@ use super::models::{ListTopicsResponse, Topic};
 
 pub async fn list(ctx: &ConnectionInfo) -> Result<ListTopicsResponse, reqwest::Error> {
     let endpoint = format!("{}/v1/projects/{}/topics", ctx.host, ctx.project_id);
-    println!("Making request at: {endpoint}");
+    println!("Fetching topics");
     let response = ctx.client.get(endpoint).send().await?;
     let payload = response.json().await?;
 
