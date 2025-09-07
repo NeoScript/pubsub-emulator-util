@@ -36,40 +36,38 @@ async fn main() {
 }
 
 async fn handle_init(args: &InitArgs, ctx: &ConnectionInfo) -> Result<(), reqwest::Error> {
-    let init_config = parser::parse_init_file(&args.file);
+    let init_config = parser::parse_init_file(&args.file).unwrap_or_else(|e| {
+        eprintln!("Error parsing init file: {}", e);
+        exit(1);
+    });
 
-    let found_conn = wait_for_connection(ctx, args.timeout).await;
-    match found_conn {
-        true => {
-            println!("Connection established!")
-        }
-        false => {
-            eprintln!("Timed out");
-            exit(1);
-        }
+    println!("Initialization Configuration accepted:\n{init_config:?}");
+
+    // Define a new ctx to use the provided host from args and project_id from file
+    let ctx = &ConnectionInfo {
+        project_id: init_config.project_id,
+        host: args.host.clone(),
+        client: ctx.client.clone(),
+    };
+
+    let connection_established = wait_for_connection(ctx, args.timeout).await;
+    if !connection_established {
+        eprintln!("Timed out whilst waiting for connection");
+        exit(1)
     }
 
-    // Create all the topics
-    if let Ok(init) = init_config {
-        println!("initialization file parsed: {}", args.file);
-        let project_id = init.project_id;
-        println!("using project: {project_id}");
+    for topic in init_config.topics {
+        let result = pubsub::topics::create(ctx, &topic.clone().into()).await;
 
-        for topic in init.topics {
-            let result = pubsub::topics::create(ctx, &topic.clone().into()).await;
+        match result {
+            Ok(t) => {
+                println!("Created topic: {:?}", t);
+            }
+            Err(e) => eprintln!("Error creating topic {:?} -> {}", topic.name, e),
+        };
 
-            match result {
-                Ok(t) => {
-                    println!("Created topic: {:?}", t);
-                }
-                Err(e) => eprintln!("Error creating topic {:?} -> {}", topic.name, e),
-            };
-
-            // TODO: make the pull subscriptions
-            // TODO: now make the push subscriptions
-        }
-    } else {
-        eprintln!("Error parsing init file")
+        // TODO: make the pull subscriptions
+        // TODO: now make the push subscriptions
     }
     Ok(())
 }
